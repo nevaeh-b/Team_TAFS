@@ -67,6 +67,7 @@ data1_ui <- function(id) {
       full_screen = TRUE,
       card_header("Accident rate by group"),
       plotOutput(ns("plot"), height = "420px"),
+      uiOutput(ns("warn_note")),
       uiOutput(ns("finding"))
     ),
 
@@ -161,16 +162,21 @@ data1_server <- function(id) {
     summ <- reactive({
       used() |>
         group_by(group = .data[[input$group]]) |>
-        summarise(injured = sum(cases), workers = sum(workers), .groups = "drop") |>
+        summarise(injured = sum(cases), workers = sum(workers),
+                  warn = any(warning_level_en != "No warning"),   # 경고 칸이 섞여 있는지
+                  .groups = "drop") |>
         mutate(rate = injured / workers * 1000,
+               label = paste0(round(rate, 2), ifelse(warn, " [!]", "")),
                share_workers = workers / sum(workers) * 100,
                share_injured = injured / sum(injured) * 100)
     })
-# 그래프 폭: 화면이 좁아도 최소 600px로 그림
+
+    # 그래프 폭: 화면이 좁아도 최소 600px로 그림 (figure margins too large 방지)
     plot_w <- function() {
       w <- session$clientData[[paste0("output_", session$ns("plot"), "_width")]]
       if (is.null(w) || w < 600) 600 else w
     }
+
     output$plot <- renderPlot({
       s <- summ()
       overall <- sum(s$injured) / sum(s$workers) * 1000
@@ -178,22 +184,37 @@ data1_server <- function(id) {
         ggplot(s, aes(group, rate)) +
           geom_line(linewidth = 1, colour = "#2c7fb8") +
           geom_point(size = 3, colour = "#2c7fb8") +
+          geom_text(aes(label = label), vjust = -1, size = 3.5) +
           scale_x_continuous(breaks = s$group) +
-          labs(x = "Year", y = "Accidents per 1,000 workers")
+          labs(x = "Year", y = "Accidents per 1,000 workers",
+               caption = if (any(s$warn)) "[!] = includes warning cells (rate may be overstated)" else NULL)
       } else {
         p <- ggplot(s, aes(group, rate)) +
           geom_col(fill = "#2c7fb8") +
           geom_hline(yintercept = overall, linetype = "dashed") +
           labs(x = NULL, y = "Accidents per 1,000 workers",
-               caption = "Dashed line = overall rate of the selection")
+               caption = paste0("Dashed line = overall rate of the selection",
+                                if (any(s$warn)) "\n[!] = includes warning cells (rate may be overstated)" else ""))
         if (input$group == "industry_en") {
-          p + geom_text(aes(label = round(rate, 2)), hjust = -0.2, size = 3.5) +
+          p + geom_text(aes(label = label), hjust = -0.1, size = 3.5) +
             coord_flip()
         } else {
-          p + geom_text(aes(label = round(rate, 2)), vjust = -0.4, size = 3.5)
+          p + geom_text(aes(label = label), vjust = -0.4, size = 3.5)
         }
       }
     }, res = 96, width = plot_w)
+
+    # 경고 칸이 포함되면 그래프 아래에 경고 문구 표시
+    output$warn_note <- renderUI({
+      notes <- used() |>
+        filter(warning_level_en != "No warning") |>
+        pull(warning_note_en) |> unique()
+      if (length(notes) == 0) return(NULL)
+      div(class = "alert alert-warning", style = "font-size: 0.9em;",
+          strong("[!] Warning cells are included. "),
+          "Compare these values with care:",
+          tags$ul(lapply(notes, tags$li)))
+    })
 
     # 규모별로 볼 때 자동으로 나오는 핵심 결과 문장
     output$finding <- renderUI({
@@ -209,8 +230,9 @@ data1_server <- function(id) {
 
     output$table <- renderTable({
       summ() |>
-        mutate(group = as.character(group),
+        mutate(group = paste0(as.character(group), ifelse(warn, " [!]", "")),
                injured = fmt(injured), workers = fmt(workers)) |>
+        select(-warn, -label) |>
         rename(Group = group, `Injured` = injured, `Workers` = workers,
                `Rate (per 1,000)` = rate, `Share of workers (%)` = share_workers,
                `Share of injured (%)` = share_injured)
