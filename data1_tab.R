@@ -166,7 +166,11 @@ data1_server <- function(id) {
                share_workers = workers / sum(workers) * 100,
                share_injured = injured / sum(injured) * 100)
     })
-
+# 그래프 폭: 화면이 좁아도 최소 600px로 그림
+    plot_w <- function() {
+      w <- session$clientData[[paste0("output_", session$ns("plot"), "_width")]]
+      if (is.null(w) || w < 600) 600 else w
+    }
     output$plot <- renderPlot({
       s <- summ()
       overall <- sum(s$injured) / sum(s$workers) * 1000
@@ -189,7 +193,7 @@ data1_server <- function(id) {
           p + geom_text(aes(label = round(rate, 2)), vjust = -0.4, size = 3.5)
         }
       }
-    }, res = 100)
+    }, res = 96, width = plot_w)
 
     # 규모별로 볼 때 자동으로 나오는 핵심 결과 문장
     output$finding <- renderUI({
