@@ -65,7 +65,8 @@ server <- function(input, output, session) {
   output$ai_reflection <- renderTable(data.frame(
     Member     = c("박채빈", "유나안", "임서원", "정예은", "조윤서"),
     Reflection = c("빅데이터를 전처리하면서 크기가 작은 데이터를 크게 고려를 안했었는데 어떠한 영향이 있을 수도 있는지 경각심을 일깨워줌. python으로 전처리 한 걸 R에서 다루기 쉽도록 변환하는 걸 부탁했는데 확인해보니 범위가 날짜로 변형되어 있었다. 만약 적은 양의 데이터가 아니고, 수많은 데이터 중간에 오류가 있었다면 찾기 힘들었을 것 같고 간단한 일이라고 해서 너무 AI에 의존하거나 믿지 말고 검사하는 자세(단계)가 필요한 것 같다. ",
-                   "TODO", "TODO", "TODO", "TODO"))) #TODO: one or two paragraphs: what AI helped with, where it failed, what you learned.
+                   "Shiny 앱 제작과 배포 과정에서 AI 도움을 많이 받음. 배포 에러(파일 이름 오류, 그래프 출력 오류 등)가 날 때마다 에러 메시지를 보여주고 원인과 수정 방법을 물어 해결함. 혼자 했으면 오래 걸렸을 문제들을 빠르게 고칠 수 있어 시간 단축에 큰 도움이 됨. 다만 AI가 주소를 추측해 알려주거나 다른 폴더를 잡는 등 틀린 경우도 있어서, 코드 실행 위치와 결과는 직접 확인해야 한다는 점을 배움.", 
+                   "TODO", "TODO", "TODO"))) #TODO: one or two paragraphs: what AI helped with, where it failed, what you learned.
 }
 
 shinyApp(ui, server)
