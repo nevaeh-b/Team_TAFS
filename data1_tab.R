@@ -11,7 +11,7 @@ library(dplyr)
 library(ggplot2)
 
 # ---- 1. 데이터 불러오기 (앱 시작할 때 한 번만) ----------------------
-rate <- read.csv("data/rate_final.csv", fileEncoding = "UTF-8-BOM")
+rate <- read.csv("rate_final.csv", fileEncoding = "UTF-8-BOM")
 rate$size_available <- rate$size_available %in% c(TRUE, "True", "TRUE")
 
 size_levels <- c("<5", "5 to 9", "10 to 19", "20 to 29", "30 to 49",
