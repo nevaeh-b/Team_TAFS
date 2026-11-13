@@ -1,5 +1,6 @@
 # Project 2 template: the tabs and the inputs only. Everything else, and the look of the app, is yours.
 library(shiny)
+source("data1_tab.R")   # Data 1 tab (UI + server)
 
 # Example: read one photo as 4,096 numbers (64 x 64 grayscale, row by row, 0 = black to 255 = white)
 # library(magick)
@@ -7,6 +8,7 @@ library(shiny)
 # x <- as.numeric(t(matrix(as.integer(image_data(img, channels = "gray")), 64, 64)))
 
 ui <- navbarPage("TODO: TAFS",
+  theme = bslib::bs_theme(version = 5),   # needed for the Data 1 cards and value boxes
   tabPanel("Shoe Search",
     radioButtons("src", "Photo", c("Catalogue", "Self-check", "Upload"), inline = TRUE),
     numericInput("cat_id", "Catalogue id", 1, 1, 2000),
@@ -32,14 +34,7 @@ ui <- navbarPage("TODO: TAFS",
     p("Choose a shoe with a widget; each choice shows its best match, its top 5 and whether it is right.")
   ),
   tabPanel("Data 1",
-    p("One Project 1 dataset, descriptive results only (filter, sort, count, mean, median, rate, group summary)."),
-    p("It should include:"),
-    tags$ul(
-      tags$li("the question you are trying to answer;"),
-      tags$li("the inputs that show it (e.g., the filter, grouping or time range you choose);"),
-      tags$li("the result in numbers;"),
-      tags$li("why it matters;"),
-      tags$li("how this finding helps your next analysis of this dataset."))
+    data1_ui("d1")
   ),
   tabPanel("AI",
     h4("Ethics statement"),
@@ -57,6 +52,9 @@ ui <- navbarPage("TODO: TAFS",
 
 server <- function(input, output, session) {
   output$result <- renderText("TODO")
+
+  # Data 1 tab
+  data1_server("d1")
 
   # AI tab: fill in the two tables. Keep the columns.
   output$ai_table <- renderTable(data.frame(
