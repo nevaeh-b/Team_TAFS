@@ -1,248 +1,72 @@
-# =============================================================
-# Data 1 tab : Industrial accident rate by workplace size & industry
-# - data1_ui("d1")      : 화면(UI) 부분
-# - data1_server("d1")  : 계산(server) 부분
-# 팀 전체 앱(app.R)에서 source("data1_tab.R") 로 불러서 씀
-# =============================================================
-
+# Project 2 template: the tabs and the inputs only. Everything else, and the look of the app, is yours.
 library(shiny)
-library(bslib)
-library(dplyr)
-library(ggplot2)
+source("data1_tab.R")   # Data 1 tab (UI + server)
 
-# ---- 1. 데이터 불러오기 (앱 시작할 때 한 번만) ----------------------
-rate <- read.csv("rate_final.csv", fileEncoding = "UTF-8-BOM")
-rate$size_available <- rate$size_available %in% c(TRUE, "True", "TRUE")
+# Example: read one photo as 4,096 numbers (64 x 64 grayscale, row by row, 0 = black to 255 = white)
+# library(magick)
+# img <- image_read("shoes/0001.png")
+# x <- as.numeric(t(matrix(as.integer(image_data(img, channels = "gray")), 64, 64)))
 
-size_levels <- c("<5", "5 to 9", "10 to 19", "20 to 29", "30 to 49",
-                 "50 to 99", "100 to 299", "300 to 499", "500 to 999", "1,000+")
-rate$size_en     <- factor(rate$size_en, levels = c(size_levels, "All sizes (no size breakdown)"))
-rate$industry_en <- factor(rate$industry_en, levels = unique(rate$industry_en))
-
-major_choices <- unique(rate$major_industry_en)
-
-# ---- 2. UI ---------------------------------------------------------
-data1_ui <- function(id) {
-  ns <- NS(id)
-  layout_sidebar(
-    sidebar = sidebar(
-      width = 290,
-      sliderInput(ns("years"), "Year", min = 2020, max = 2024,
-                  value = c(2020, 2024), step = 1, sep = ""),
-      checkboxGroupInput(ns("major"), "Major industry",
-                         choices = major_choices, selected = major_choices),
-      selectizeInput(ns("industry"), "Industry (leave empty = all)",
-                     choices = NULL, multiple = TRUE),
-      checkboxGroupInput(ns("size"), "Workplace size (workers)",
-                         choices = size_levels, selected = size_levels),
-      radioButtons(ns("group"), "Compare by",
-                   choices = c("Workplace size" = "size_en",
-                               "Industry" = "industry_en",
-                               "Year" = "year")),
-      checkboxInput(ns("drop_warn"), "Exclude warning cells", value = TRUE),
-      checkboxInput(ns("keep_unstable"), "Include unstable cells", value = TRUE)
-    ),
-
-    # 질문
-    card(
-      card_header("Question"),
-      p(strong("Does the industrial accident rate differ by workplace size and industry?")),
-      p("Rate = injured workers / workers × 1,000 (per 1,000 workers). ",
-        "Accidents only (occupational disease excluded), 2020–2024.")
-    ),
-
-    # 숫자 요약 (value box 5개)
-    layout_columns(
-      fill = FALSE,
-      value_box("Injured workers", textOutput(ns("vb_cases")),
-                textOutput(ns("vb_cases_avg"))),
-      value_box("Workers",         textOutput(ns("vb_workers")),
-                textOutput(ns("vb_workers_avg"))),
-      value_box("Accident rate (‰)", textOutput(ns("vb_rate")),
-                textOutput(ns("vb_rate_stable"))),
-      value_box("Mean of industry rates",   textOutput(ns("vb_mean"))),
-      value_box("Median of industry rates", textOutput(ns("vb_median")))
-    ),
-
-    # 그래프 + 핵심 결과 문장
-    card(
-      full_screen = TRUE,
-      card_header("Accident rate by group"),
-      plotOutput(ns("plot"), height = "420px"),
-      uiOutput(ns("warn_note")),
-      uiOutput(ns("finding"))
-    ),
-
-    # 표
-    card(
-      card_header("Summary table"),
-      tableOutput(ns("table"))
-    ),
-
-    # 왜 중요한가 / 다음 분석 / 주의사항
-    card(
-      card_header("Why it matters & next step"),
-      p(strong("Why it matters: "),
-        "Counting injured workers alone makes large industries stand out just because ",
-        "they employ more people. The rate shows where risk is actually concentrated, ",
-        "which helps decide where prevention support should go first."),
-      p(strong("Next analysis: "),
-        "For high-rate groups (especially small workplaces), look at which accident types ",
-        "occur most and at workers' age and length of employment."),
-      tags$small(
-        tags$ul(
-          tags$li("Construction has yearly totals only (no size breakdown), so it is dropped ",
-                  "when you compare by size or select only some sizes."),
-          tags$li("Unstable = fewer than 10 injured or fewer than 1,000 workers. ",
-                  "The rate excluding them is shown under the main rate."),
-          tags$li("Warning cells (transport/storage/communication; government <5) count people in ",
-                  "the numerator who are not in the denominator, so their rates may be overstated.")
-        )
-      )
-    )
+ui <- navbarPage("TODO: TAFS",
+  theme = bslib::bs_theme(version = 5),   # needed for the Data 1 cards and value boxes
+  tabPanel("Shoe Search",
+    radioButtons("src", "Photo", c("Catalogue", "Self-check", "Upload"), inline = TRUE),
+    numericInput("cat_id", "Catalogue id", 1, 1, 2000),
+    selectInput("sc_file", "Self-check photo", sprintf("selfcheck_%02d.png", 1:4)),
+    fileInput("photo", "Upload", accept = c(".jpg", ".jpeg", ".png")),
+    sliderInput("K", "Number of PCs (K)", 1, 100, 20),
+    textOutput("result")   # TODO: best match, top 5, prediction, right or wrong
+  ),
+  tabPanel("Explain PCA",
+    p("For the photo chosen in Shoe Search, show how PCA finds the match."),
+    h4("Step 1. Average shoe"), p("x̅, the mean of the 2,000 photos."),
+    h4("Step 2. Photo − average"), p("x − x̅, where the photo is brighter or darker than the average shoe."),
+    h4("Step 3. Score map"), p("All catalogue photos on PC1 and PC2, colored by category, with your photo marked."),
+    h4("Step 4. Eigenshoes"), p("Show PC1, PC2, … as pictures (their loadings drawn as 64 × 64 images), so we can see what shape each PC captures, and how much variance each explains."),
+    h4("Step 5. Scores"), p("The photo’s first K PC scores, the numbers used to find the match."),
+    h4("Step 6. Rebuild"), p("The photo rebuilt from the average shoe and the first K eigenshoes, for several K."),
+    h4("More"), p("Anything else you want to show or explain related to it.")
+  ),
+  tabPanel("Our Shoes",
+    p("Can your app recognize real shoes it has never seen?"),
+    p("Each member photographs 3 different shoes of their own (shoe only, plain background), e.g., YourName_Sandals_1.jpg."),
+    p("Show all of them with name and category (3 × n photos for n members)."),
+    p("Choose a shoe with a widget; each choice shows its best match, its top 5 and whether it is right.")
+  ),
+  tabPanel("Data 1",
+    data1_ui("d1")
+  ),
+  tabPanel("AI",
+    h4("Ethics statement"),
+    p("We understand the rules on data and AI use for this project, including following the license and privacy rules",
+      "of every dataset we used, understanding all of our code, and knowing that presenting AI output as our own work may be",
+      "academic misconduct. We certify that we have followed all of them. Any violation is our responsibility,",
+      "and we agree to receive an F in this course if we have not."),
+    p("Signed: TODO (every member)"),
+    h4("What AI did and what we did"),
+    tableOutput("ai_table"),
+    h4("Reflection"),
+    tableOutput("ai_reflection")
   )
+)
+
+server <- function(input, output, session) {
+  output$result <- renderText("TODO")
+
+  # Data 1 tab
+  data1_server("d1")
+
+  # AI tab: fill in the two tables. Keep the columns.
+  output$ai_table <- renderTable(data.frame(
+    Tab           = c("Shoe Search", "Explain PCA", "Our Shoes", "Data 1"),
+    `What AI did` = c("TODO", "TODO", "TODO", "TODO"),
+    `What we did` = c("TODO", "TODO", "TODO", "TODO"),
+    check.names = FALSE))
+  output$ai_reflection <- renderTable(data.frame(
+    Member     = c("박채빈", "유나안", "임서원", "정예은", "조윤서"),
+    Reflection = c("빅데이터를 전처리하면서 크기가 작은 데이터를 크게 고려를 안했었는데 어떠한 영향이 있을 수도 있는지 경각심을 일깨워줌. python으로 전처리 한 걸 R에서 다루기 쉽도록 변환하는 걸 부탁했는데 확인해보니 범위가 날짜로 변형되어 있었다. 만약 적은 양의 데이터가 아니고, 수많은 데이터 중간에 오류가 있었다면 찾기 힘들었을 것 같고 간단한 일이라고 해서 너무 AI에 의존하거나 믿지 말고 검사하는 자세(단계)가 필요한 것 같다. ",
+                   "Shiny 앱 제작과 배포 과정에서 AI 도움을 많이 받음. 배포 에러(파일 이름 오류, 그래프 출력 오류 등)가 날 때마다 에러 메시지를 보여주고 원인과 수정 방법을 물어 해결함. 혼자 했으면 오래 걸렸을 문제들을 빠르게 고칠 수 있어 시간 단축에 큰 도움이 됨. 다만 AI가 주소를 추측해 알려주거나 다른 폴더를 잡는 등 틀린 경우도 있어서, 코드 실행 위치와 결과는 직접 확인해야 한다는 점을 배움.", 
+                   "TODO", "TODO", "TODO"))) #TODO: one or two paragraphs: what AI helped with, where it failed, what you learned.
 }
 
-# ---- 3. Server -----------------------------------------------------
-data1_server <- function(id) {
-  moduleServer(id, function(input, output, session) {
-
-    # 대업종을 바꾸면 세부 업종 목록도 바뀌게
-    observe({
-      inds <- rate |>
-        filter(major_industry_en %in% input$major) |>
-        pull(industry_en) |> unique() |> as.character()
-      updateSelectizeInput(session, "industry", choices = inds,
-                           selected = intersect(isolate(input$industry), inds))
-    })
-
-    # 필터 적용 (불안정 칸 처리 전)
-    filtered <- reactive({
-      d <- rate |>
-        filter(year >= input$years[1], year <= input$years[2],
-               major_industry_en %in% input$major,
-               workers > 0)
-      if (length(input$industry) > 0) d <- d |> filter(industry_en %in% input$industry)
-
-      # 규모로 비교하거나 일부 규모만 고르면 건설업(규모 없음)은 빠짐
-      all_sizes <- length(input$size) == length(size_levels)
-      if (!all_sizes || input$group == "size_en") d <- d |> filter(size_available)
-      d <- d |> filter(!size_available | size_en %in% input$size)
-
-      if (input$drop_warn) d <- d |> filter(warning_level_en == "No warning")
-      d
-    })
-
-    # 불안정 칸 포함 여부 반영
-    used <- reactive({
-      d <- filtered()
-      if (!input$keep_unstable) d <- d |> filter(status_en != "Unstable")
-      validate(need(nrow(d) > 0, "No data for this selection. Try other filters."))
-      d
-    })
-
-    # 업종별 재해율 (평균, 중앙값 계산용)
-    ind_rates <- reactive({
-      used() |>
-        group_by(industry_en) |>
-        summarise(r = sum(cases) / sum(workers) * 1000, .groups = "drop")
-    })
-
-    fmt <- function(x, d = 0) format(round(x, d), big.mark = ",", nsmall = d)
-
-    output$vb_cases   <- renderText(fmt(sum(used()$cases)))
-    output$vb_workers <- renderText(fmt(sum(used()$workers)))
-    # 연평균 = 합계 / 선택한 연도 수
-    n_years <- reactive(length(unique(used()$year)))
-    output$vb_cases_avg   <- renderText(paste0("Annual average: ", fmt(sum(used()$cases) / n_years())))
-    output$vb_workers_avg <- renderText(paste0("Annual average: ", fmt(sum(used()$workers) / n_years())))
-
-    output$vb_rate    <- renderText(fmt(sum(used()$cases) / sum(used()$workers) * 1000, 2))
-    output$vb_rate_stable <- renderText({
-      s <- filtered() |> filter(status_en != "Unstable")
-      paste0("Excl. unstable: ", fmt(sum(s$cases) / sum(s$workers) * 1000, 2))
-    })
-    output$vb_mean   <- renderText(fmt(mean(ind_rates()$r), 2))
-    output$vb_median <- renderText(fmt(median(ind_rates()$r), 2))
-
-    # 그룹별 요약
-    summ <- reactive({
-      used() |>
-        group_by(group = .data[[input$group]]) |>
-        summarise(injured = sum(cases), workers = sum(workers),
-                  warn = any(warning_level_en != "No warning"),   # 경고 칸이 섞여 있는지
-                  .groups = "drop") |>
-        mutate(rate = injured / workers * 1000,
-               label = paste0(round(rate, 2), ifelse(warn, " [!]", "")),
-               share_workers = workers / sum(workers) * 100,
-               share_injured = injured / sum(injured) * 100)
-    })
-
-    # 그래프 폭: 화면이 좁아도 최소 600px로 그림 (figure margins too large 방지)
-    plot_w <- function() {
-      w <- session$clientData[[paste0("output_", session$ns("plot"), "_width")]]
-      if (is.null(w) || w < 600) 600 else w
-    }
-
-    output$plot <- renderPlot({
-      s <- summ()
-      overall <- sum(s$injured) / sum(s$workers) * 1000
-      if (input$group == "year") {
-        ggplot(s, aes(group, rate)) +
-          geom_line(linewidth = 1, colour = "#2c7fb8") +
-          geom_point(size = 3, colour = "#2c7fb8") +
-          geom_text(aes(label = label), vjust = -1, size = 3.5) +
-          scale_x_continuous(breaks = s$group) +
-          labs(x = "Year", y = "Accidents per 1,000 workers",
-               caption = if (any(s$warn)) "[!] = includes warning cells (rate may be overstated)" else NULL)
-      } else {
-        p <- ggplot(s, aes(group, rate)) +
-          geom_col(fill = "#2c7fb8") +
-          geom_hline(yintercept = overall, linetype = "dashed") +
-          labs(x = NULL, y = "Accidents per 1,000 workers",
-               caption = paste0("Dashed line = overall rate of the selection",
-                                if (any(s$warn)) "\n[!] = includes warning cells (rate may be overstated)" else ""))
-        if (input$group == "industry_en") {
-          p + geom_text(aes(label = label), hjust = -0.1, size = 3.5) +
-            coord_flip()
-        } else {
-          p + geom_text(aes(label = label), vjust = -0.4, size = 3.5)
-        }
-      }
-    }, res = 96, width = plot_w)
-
-    # 경고 칸이 포함되면 그래프 아래에 경고 문구 표시
-    output$warn_note <- renderUI({
-      notes <- used() |>
-        filter(warning_level_en != "No warning") |>
-        pull(warning_note_en) |> unique()
-      if (length(notes) == 0) return(NULL)
-      div(class = "alert alert-warning", style = "font-size: 0.9em;",
-          strong("[!] Warning cells are included. "),
-          "Compare these values with care:",
-          tags$ul(lapply(notes, tags$li)))
-    })
-
-    # 규모별로 볼 때 자동으로 나오는 핵심 결과 문장
-    output$finding <- renderUI({
-      s <- summ()
-      if (input$group != "size_en" || !all(c("<5", "1,000+") %in% s$group)) return(NULL)
-      a <- s[s$group == "<5", ]; b <- s[s$group == "1,000+", ]
-      p(strong("Result: "),
-        sprintf("Workplaces with <5 workers have %.2f accidents per 1,000 workers vs %.2f for 1,000+ (%.1f times). ",
-                a$rate, b$rate, a$rate / b$rate),
-        sprintf("They employ %.1f%% of workers but account for %.1f%% of injured workers.",
-                a$share_workers, a$share_injured))
-    })
-
-    output$table <- renderTable({
-      summ() |>
-        mutate(group = paste0(as.character(group), ifelse(warn, " [!]", "")),
-               injured = fmt(injured), workers = fmt(workers)) |>
-        select(-warn, -label) |>
-        rename(Group = group, `Injured` = injured, `Workers` = workers,
-               `Rate (per 1,000)` = rate, `Share of workers (%)` = share_workers,
-               `Share of injured (%)` = share_injured)
-    }, digits = 2, striped = TRUE)
-  })
-}
+shinyApp(ui, server)
