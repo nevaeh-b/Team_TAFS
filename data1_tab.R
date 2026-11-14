@@ -54,8 +54,10 @@ data1_ui <- function(id) {
     # 숫자 요약 (value box 5개)
     layout_columns(
       fill = FALSE,
-      value_box("Injured workers", textOutput(ns("vb_cases"))),
-      value_box("Workers",         textOutput(ns("vb_workers"))),
+            value_box("Injured workers", textOutput(ns("vb_cases")),
+                textOutput(ns("vb_cases_avg"))),
+      value_box("Workers",         textOutput(ns("vb_workers")),
+                textOutput(ns("vb_workers_avg"))),
       value_box("Accident rate (‰)", textOutput(ns("vb_rate")),
                 textOutput(ns("vb_rate_stable"))),
       value_box("Mean of industry rates",   textOutput(ns("vb_mean"))),
@@ -150,6 +152,10 @@ data1_server <- function(id) {
 
     output$vb_cases   <- renderText(fmt(sum(used()$cases)))
     output$vb_workers <- renderText(fmt(sum(used()$workers)))
+        # 연평균 = 합계 / 선택한 연도 수
+    n_years <- reactive(length(unique(used()$year)))
+    output$vb_cases_avg   <- renderText(paste0("Annual average: ", fmt(sum(used()$cases) / n_years())))
+    output$vb_workers_avg <- renderText(paste0("Annual average: ", fmt(sum(used()$workers) / n_years())))
     output$vb_rate    <- renderText(fmt(sum(used()$cases) / sum(used()$workers) * 1000, 2))
     output$vb_rate_stable <- renderText({
       s <- filtered() |> filter(status_en != "Unstable")
