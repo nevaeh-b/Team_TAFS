@@ -59,7 +59,7 @@ server <- function(input, output, session) {
   output$ai_table <- renderTable(data.frame(
     Tab           = c("Shoe Search", "Explain PCA", "Our Shoes", "Data 1"),
     `What AI did` = c("TODO", "TODO", "TODO", "TODO"),
-    `What we did` = c("TODO", "TODO", "TODO", "TODO"),
+    `What we did` = c("TODO", "TODO", "TODO", "박채빈: 기존 데이터와 융합할 데이터 탐색 및 전처리"),
     check.names = FALSE))
   output$ai_reflection <- renderTable(data.frame(
     Member     = c("박채빈", "유나안", "임서원", "정예은", "조윤서"),
