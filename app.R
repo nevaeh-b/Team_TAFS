@@ -58,8 +58,8 @@ server <- function(input, output, session) {
   # AI tab: fill in the two tables. Keep the columns.
   output$ai_table <- renderTable(data.frame(
     Tab           = c("Shoe Search", "Explain PCA", "Our Shoes", "Data 1"),
-    `What AI did` = c("TODO", "익숙하지 않은 R 함수와 시각화 코드 작성, 그래프 설정 인자 및 PCA 계산 과정 설명, 음수가 포함된 픽셀 차이값을 흑백 이미지로 시각화하기 위한 변환 방법 제시. 그러나 일부 잘못된 코드 작성(plot(as.raster())에서 지원하지 않는 axes 인자 사용)", "TODO", "R에서 다루기 쉽도록 전처리된 데이터 변환, Shiny 앱 제작 및 배포 과정에서 발생한 에러 해결 도움"),
-    `What we did` = c("TODO", "수업에서 배운 개념 바탕으로 탭 구현, AI의 도움을 받은 코드 검토 및 수정, 지원되지 않는 axes 인자 제거, 반복적인 테스트를 통해 그래프 설정값 조정, rebuild 과정에서 발생한 행렬곱 오류 원인 검토", "TODO", "데이터 분석, 전처리, 문제 탐색, 앱 제작 및 배포"),
+    `What AI did` = c("PCA 검색 엔진(prcomp, 점수 계산, 가장 가까운 5장 검색, 최빈 category 예측)과 사진 업로드 전처리, Shiny 화면 및 서버 코드 단계별 제안, 에러 메시지 원인 설명. 그러나 슬라이더와 숫자칸 동기화 코드에 K가 혼자 바뀌는 오류가 있었음"", "익숙하지 않은 R 함수와 시각화 코드 작성, 그래프 설정 인자 및 PCA 계산 과정 설명, 음수가 포함된 픽셀 차이값을 흑백 이미지로 시각화하기 위한 변환 방법 제시. 그러나 일부 잘못된 코드 작성(plot(as.raster())에서 지원하지 않는 axes 인자 사용)", "TODO", "R에서 다루기 쉽도록 전처리된 데이터 변환, Shiny 앱 제작 및 배포 과정에서 발생한 에러 해결 도움"),
+    `What we did` = c("PCA 검색 엔진 구현 및 K 기본값 50 확정: selfcheck 4장 중 4장 정답(K=50), 카탈로그 200장 검증 정확도 약 72%(K=20 70.5%, K=50 72%, K=100 71%)로 근거 확인. 방향, 위치, 배경이 다르면 정확도가 떨어지는 한계를 확인하고 좌우 반전 옵션 추가", "수업에서 배운 개념 바탕으로 탭 구현, AI의 도움을 받은 코드 검토 및 수정, 지원되지 않는 axes 인자 제거, 반복적인 테스트를 통해 그래프 설정값 조정, rebuild 과정에서 발생한 행렬곱 오류 원인 검토", "TODO", "데이터 분석, 전처리, 문제 탐색, 앱 제작 및 배포"),
     check.names = FALSE))
   output$ai_reflection <- renderTable(data.frame(
     Member     = c("박채빈", "유나안", "임서원", "정예은", "조윤서"),
