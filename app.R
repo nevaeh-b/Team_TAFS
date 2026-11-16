@@ -1,6 +1,6 @@
 # Project 2 template: the tabs and the inputs only. Everything else, and the look of the app, is yours.
 library(shiny)
-source("data1_tab.R")   # Data 1 tab (UI + server)
+source("app_data1.R")   # Data 1 tab (UI + server)
 source("global.R")
 source("shoe_search.R")
 source("explain_pca.R")
