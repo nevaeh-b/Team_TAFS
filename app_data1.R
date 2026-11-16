@@ -58,7 +58,7 @@ data1_ui <- function(id) {
                 textOutput(ns("vb_cases_avg"))),
       value_box("Workers",         textOutput(ns("vb_workers")),
                 textOutput(ns("vb_workers_avg"))),
-      value_box("Accident rate (‰)", textOutput(ns("vb_rate")),
+      value_box("Accident rate (%)", textOutput(ns("vb_rate")),
                 textOutput(ns("vb_rate_stable"))),
       value_box("Mean of industry rates",   textOutput(ns("vb_mean"))),
       value_box("Median of industry rates", textOutput(ns("vb_median")))
