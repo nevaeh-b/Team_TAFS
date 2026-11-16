@@ -47,7 +47,7 @@ data1_ui <- function(id) {
     card(
       card_header("Question"),
       p(strong("Does the industrial accident rate differ by workplace size and industry?")),
-      p("Rate = injured workers / workers × 1,000 (per 1,000 workers). ",
+      p("Rate = injured workers / workers × 100 (%). ",
         "Accidents only (occupational disease excluded), 2020–2024.")
     ),
 
@@ -84,7 +84,7 @@ data1_ui <- function(id) {
       card_header("Why it matters & next step"),
       p(strong("Why it matters: "),
         "Counting injured workers alone makes large industries stand out just because ",
-        "they employ more people. The rate shows where risk is actually concentrated, ",
+        "they employ more people. The rate helps identify groups with relatively higher accident rates, ",
         "which helps decide where prevention support should go first."),
       p(strong("Next analysis: "),
         "For high-rate groups (especially small workplaces), look at which accident types ",
@@ -145,7 +145,7 @@ data1_server <- function(id) {
     ind_rates <- reactive({
       used() |>
         group_by(industry_en) |>
-        summarise(r = sum(cases) / sum(workers) * 1000, .groups = "drop")
+        summarise(r = sum(cases) / sum(workers) * 100, .groups = "drop")
     })
 
     fmt <- function(x, d = 0) format(round(x, d), big.mark = ",", nsmall = d)
@@ -157,10 +157,10 @@ data1_server <- function(id) {
     output$vb_cases_avg   <- renderText(paste0("Annual average: ", fmt(sum(used()$cases) / n_years())))
     output$vb_workers_avg <- renderText(paste0("Annual average: ", fmt(sum(used()$workers) / n_years())))
 
-    output$vb_rate    <- renderText(fmt(sum(used()$cases) / sum(used()$workers) * 1000, 2))
+    output$vb_rate    <- renderText(fmt(sum(used()$cases) / sum(used()$workers) * 100, 2))
     output$vb_rate_stable <- renderText({
       s <- filtered() |> filter(status_en != "Unstable")
-      paste0("Excl. unstable: ", fmt(sum(s$cases) / sum(s$workers) * 1000, 2))
+      paste0("Excl. unstable: ", fmt(sum(s$cases) / sum(s$workers) * 100, 2))
     })
     output$vb_mean   <- renderText(fmt(mean(ind_rates()$r), 2))
     output$vb_median <- renderText(fmt(median(ind_rates()$r), 2))
@@ -172,7 +172,7 @@ data1_server <- function(id) {
         summarise(injured = sum(cases), workers = sum(workers),
                   warn = any(warning_level_en != "No warning"),   # 경고 칸이 섞여 있는지
                   .groups = "drop") |>
-        mutate(rate = injured / workers * 1000,
+        mutate(rate = injured / workers * 100,
                label = paste0(round(rate, 2), ifelse(warn, " [!]", "")),
                share_workers = workers / sum(workers) * 100,
                share_injured = injured / sum(injured) * 100)
@@ -186,20 +186,20 @@ data1_server <- function(id) {
 
     output$plot <- renderPlot({
       s <- summ()
-      overall <- sum(s$injured) / sum(s$workers) * 1000
+      overall <- sum(s$injured) / sum(s$workers) * 100
       if (input$group == "year") {
         ggplot(s, aes(group, rate)) +
           geom_line(linewidth = 1, colour = "#2c7fb8") +
           geom_point(size = 3, colour = "#2c7fb8") +
           geom_text(aes(label = label), vjust = -1, size = 3.5) +
           scale_x_continuous(breaks = s$group) +
-          labs(x = "Year", y = "Accidents per 1,000 workers",
+          labs(x = "Year", y = "Accident rate (%)",
                caption = if (any(s$warn)) "[!] = includes warning cells (rate may be overstated)" else NULL)
       } else {
         p <- ggplot(s, aes(group, rate)) +
           geom_col(fill = "#2c7fb8") +
           geom_hline(yintercept = overall, linetype = "dashed") +
-          labs(x = NULL, y = "Accidents per 1,000 workers",
+          labs(x = NULL, y = "Accident rate (%)",
                caption = paste0("Dashed line = overall rate of the selection",
                                 if (any(s$warn)) "\n[!] = includes warning cells (rate may be overstated)" else ""))
         if (input$group == "industry_en") {
@@ -229,7 +229,7 @@ data1_server <- function(id) {
       if (input$group != "size_en" || !all(c("<5", "1,000+") %in% s$group)) return(NULL)
       a <- s[s$group == "<5", ]; b <- s[s$group == "1,000+", ]
       p(strong("Result: "),
-        sprintf("Workplaces with <5 workers have %.2f accidents per 1,000 workers vs %.2f for 1,000+ (%.1f times). ",
+        sprintf("Workplaces with <5 workers have an accident rate of %.2f%% vs %.2f%% for 1,000+ (%.1f times). ",
                 a$rate, b$rate, a$rate / b$rate),
         sprintf("They employ %.1f%% of workers but account for %.1f%% of injured workers.",
                 a$share_workers, a$share_injured))
@@ -241,7 +241,7 @@ data1_server <- function(id) {
                injured = fmt(injured), workers = fmt(workers)) |>
         select(-warn, -label) |>
         rename(Group = group, `Injured` = injured, `Workers` = workers,
-               `Rate (per 1,000)` = rate, `Share of workers (%)` = share_workers,
+               `Rate (%)` = rate, `Share of workers (%)` = share_workers,
                `Share of injured (%)` = share_injured)
     }, digits = 2, striped = TRUE)
   })
